@@ -1,6 +1,7 @@
 package com.example.viko.sunshine;
 
 import android.app.Activity;
+import android.content.Context;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,6 +37,8 @@ import java.util.List;
  * Created by viko on 04/10/2014.
  */
 public class ForecastFragment extends Fragment {
+
+    public static ArrayAdapter<String> mForecastAdapter;
 
     public ForecastFragment() {
     }
@@ -63,14 +67,14 @@ public class ForecastFragment extends Fragment {
         List<String> weekForecast = new ArrayList<String>(
                 Arrays.asList(forecastArray));
 
-        ArrayAdapter<String> forecastAdapter = new ArrayAdapter<String>(
+       mForecastAdapter = new ArrayAdapter<String>(
                 this.getActivity(),
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textview,
-                weekForecast );
+               weekForecast);
 
         ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
-        forecastList.setAdapter(forecastAdapter);
+        forecastList.setAdapter(mForecastAdapter);
 
         return rootView;
     }
@@ -173,7 +177,8 @@ public class ForecastFragment extends Fragment {
             }
 
             try {
-                return getWeatherDataFromJson(forecastJsonStr, numberOfDays);
+                String[] forecastStrs = getWeatherDataFromJson(forecastJsonStr, numberOfDays);
+                return forecastStrs;
             } catch (Exception e ){
                 Log.e(LOG_TAG, e.getMessage(), e);
             }
@@ -181,9 +186,20 @@ public class ForecastFragment extends Fragment {
             return null;
         }
 
+        @Override
+        protected void onPostExecute(String[] strings) {
+            if (strings != null ) {
+                mForecastAdapter.clear();
+                for (String s : strings) {
+                    mForecastAdapter.add(s);
+                }
+                mForecastAdapter.notifyDataSetChanged();
+            }
+        }
+
         /* The date/time conversion code is going to be moved outside the asynctask later,
- * so for convenience we're breaking it out into its own method now.
- */
+         * so for convenience we're breaking it out into its own method now.
+         */
         private String getReadableDateString(long time){
             // Because the API returns a unix timestamp (measured in seconds),
             // it must be converted to milliseconds in order to be converted to valid date.
