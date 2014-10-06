@@ -78,24 +78,18 @@ public class ForecastFragment extends Fragment {
                 R.id.list_item_forecast_textview,
                weekForecast);
 
-        final ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
-        forecastList.setAdapter(mForecastAdapter);
-        forecastList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+       final ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
+       forecastList.setAdapter(mForecastAdapter);
+       forecastList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
-                // Create the text message with a string
                 Intent sendIntent = new Intent(act, DetailActivity.class);
-                //sendIntent.setAction(Intent.ACTION_SEND);
                 sendIntent.putExtra(Intent.EXTRA_TEXT, mForecastAdapter.getItem(i));
-
-                // Verify that the intent will resolve to an activity
-                if (sendIntent.resolveActivity(act.getPackageManager()) != null) {
-                    startActivity(sendIntent);
-                }
+                startActivity(sendIntent);
             }
-        });
+       });
 
-        return rootView;
+       return rootView;
     }
 
     @Override
