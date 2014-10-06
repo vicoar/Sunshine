@@ -2,6 +2,7 @@ package com.example.viko.sunshine;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,10 +14,13 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import org.apache.http.protocol.HTTP;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -53,6 +57,7 @@ public class ForecastFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+        final Activity act = this.getActivity();
 
         String[] forecastArray = {
                 "Today - Sunny - 24/18",
@@ -68,13 +73,27 @@ public class ForecastFragment extends Fragment {
                 Arrays.asList(forecastArray));
 
        mForecastAdapter = new ArrayAdapter<String>(
-                this.getActivity(),
+                act,
                 R.layout.list_item_forecast,
                 R.id.list_item_forecast_textview,
                weekForecast);
 
-        ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
+        final ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
         forecastList.setAdapter(mForecastAdapter);
+        forecastList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
+                // Create the text message with a string
+                Intent sendIntent = new Intent(act, DetailActivity.class);
+                //sendIntent.setAction(Intent.ACTION_SEND);
+                sendIntent.putExtra(Intent.EXTRA_TEXT, mForecastAdapter.getItem(i));
+
+                // Verify that the intent will resolve to an activity
+                if (sendIntent.resolveActivity(act.getPackageManager()) != null) {
+                    startActivity(sendIntent);
+                }
+            }
+        });
 
         return rootView;
     }
