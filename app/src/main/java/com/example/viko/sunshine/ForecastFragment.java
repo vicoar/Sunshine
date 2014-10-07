@@ -3,9 +3,11 @@ package com.example.viko.sunshine;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,24 +61,11 @@ public class ForecastFragment extends Fragment {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
         final Activity act = this.getActivity();
 
-        String[] forecastArray = {
-                "Today - Sunny - 24/18",
-                "Tomorrow - Cloudy - 20/15",
-                "Monday - Cloudy - 20/15",
-                "Thuesday - Cloudy - 20/15",
-                "Wednsday - Cloudy - 20/15",
-                "Thuday - Cloudy - 20/15",
-                "Friday - Cloudy - 20/15"
-        };
-
-        List<String> weekForecast = new ArrayList<String>(
-                Arrays.asList(forecastArray));
-
-       mForecastAdapter = new ArrayAdapter<String>(
-                act,
-                R.layout.list_item_forecast,
-                R.id.list_item_forecast_textview,
-               weekForecast);
+        mForecastAdapter = new ArrayAdapter<String>(
+               act,
+               R.layout.list_item_forecast,
+               R.id.list_item_forecast_textview,
+               new ArrayList<String>());
 
        final ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
        forecastList.setAdapter(mForecastAdapter);
@@ -93,6 +82,12 @@ public class ForecastFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        updateWeather();
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecastfragment, menu);
     }
@@ -101,11 +96,20 @@ public class ForecastFragment extends Fragment {
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
         if ( id == R.id.action_refresh ){
-            FetchWeatherTask fetchWeatherTask= new FetchWeatherTask();
-            fetchWeatherTask.execute("94043");
+            updateWeather();
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void updateWeather() {
+        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
+
+        //get the sharepref
+        String location = settings.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_label_default));
+
+        FetchWeatherTask fetchWeatherTask= new FetchWeatherTask();
+        fetchWeatherTask.execute(location);
     }
 
     public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
@@ -226,8 +230,8 @@ public class ForecastFragment extends Fragment {
          */
         private String formatHighLows(double high, double low) {
             // For presentation, assume the user doesn't care about tenths of a degree.
-            long roundedHigh = Math.round(high);
-            long roundedLow = Math.round(low);
+            long roundedHigh = Math.round(convertUnits(high));
+            long roundedLow = Math.round(convertUnits(low));
 
             String highLowStr = roundedHigh + "/" + roundedLow;
             return highLowStr;
@@ -286,6 +290,18 @@ public class ForecastFragment extends Fragment {
             }
 
             return resultStrs;
+        }
+
+        private double convertUnits(double temp){
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String defaultUnits = getString(R.string.pref_unit_default);
+            String units = settings.getString(getString(R.string.pref_unit_key), defaultUnits);
+
+            if ( !units.equals(defaultUnits) ){
+                return temp * 1.8 + 32;
+            }
+
+            return temp;
         }
     }
 }
