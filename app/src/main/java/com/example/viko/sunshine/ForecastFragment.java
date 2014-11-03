@@ -99,6 +99,19 @@ public class ForecastFragment extends Fragment {
             updateWeather();
             return true;
         }
+        if ( id == R.id.action_show_location ){
+            SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String location = settings.getString(getString(R.string.pref_location_key),getString(R.string.pref_location_label_default));
+
+            // Create the text message with a string
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:"+location));
+
+            // Verify that the intent will resolve to an activity
+            if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
+                startActivity(intent);
+            }
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 
@@ -106,7 +119,7 @@ public class ForecastFragment extends Fragment {
         SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         //get the sharepref
-        String location = settings.getString(getString(R.string.pref_location_key), getString(R.string.pref_location_label_default));
+        String location = settings.getString(getString(R.string.pref_location_key),getString(R.string.pref_location_label_default));
 
         FetchWeatherTask fetchWeatherTask= new FetchWeatherTask();
         fetchWeatherTask.execute(location);
