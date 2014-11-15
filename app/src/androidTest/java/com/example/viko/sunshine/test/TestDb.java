@@ -62,20 +62,7 @@ public class TestDb extends AndroidTestCase {
                 null // sort order
         );
 
-        if ( cursor.moveToFirst() ) {
-            ContentValues map = new ContentValues();
-            DatabaseUtils.cursorRowToContentValues(cursor, map);
-
-            Set<String> keySet = values.keySet();
-
-            for (String key : keySet) {
-                int idx = cursor.getColumnIndex(key);
-                Object val = cursor.getString(idx);
-                assertEquals(values.get(key).toString(), val);
-            }
-        } else {
-            fail("No values returned");
-        }
+        compareCursorValue(cursor, values);
 
         // Fantastic.  Now that we have a location, add some weather!
         String testDateText = "20141205";
@@ -127,21 +114,26 @@ public class TestDb extends AndroidTestCase {
                 null // sort order
         );
 
-        if ( weatherCursor.moveToFirst() ) {
-            ContentValues weatherMap = new ContentValues();
-            DatabaseUtils.cursorRowToContentValues(weatherCursor, weatherMap);
-
-            Set<String> weatherKeySet = weatherValues.keySet();
-
-            for (String key : weatherKeySet) {
-                int wIdx = weatherCursor.getColumnIndex(key);
-                String wVal = weatherCursor.getString(wIdx);
-                assertEquals(weatherValues.getAsString(key), wVal);
-            }
-        } else {
-            fail("No values returned");
-        }
+        compareCursorValue(weatherCursor, weatherValues);
 
         db.close();
+    }
+
+    private void compareCursorValue(Cursor c, ContentValues v) {
+        assertTrue(c.moveToFirst());
+
+        ContentValues map = new ContentValues();
+        DatabaseUtils.cursorRowToContentValues(c, map);
+
+        Set<String> keySet = v.keySet();
+
+        for (String key : keySet) {
+            int idx = c.getColumnIndex(key);
+            assertFalse(idx == -1);
+            String val = c.getString(idx);
+            assertEquals(v.getAsString(key), val);
+        }
+
+        c.close();
     }
 }
