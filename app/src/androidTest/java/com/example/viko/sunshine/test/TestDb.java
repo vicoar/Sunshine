@@ -27,34 +27,21 @@ public class TestDb extends AndroidTestCase {
     }
 
     public void testInsertDb() throws Throwable{
-        String testName = "North Pole";
-        String testLocation = "99785";
-        double testLat = 64.772;
-        double testLong = -147.355;
-
         WeatherDbHelper dbHelper =  new WeatherDbHelper(mContext);
         SQLiteDatabase db =dbHelper.getWritableDatabase();
 
         ContentValues values = new ContentValues();
-        values.put(LocationEntry.COLUMN_CITY_NAME, testName);
-        values.put(LocationEntry.COLUMN_LOCATION_SETTING, testLocation);
-        values.put(LocationEntry.COLUMN_COORD_LAT, testLat);
-        values.put(LocationEntry.COLUMN_COORD_LONG, testLong);
+        values.put(LocationEntry.COLUMN_CITY_NAME, "North Pole");
+        values.put(LocationEntry.COLUMN_LOCATION_SETTING, "99785");
+        values.put(LocationEntry.COLUMN_COORD_LAT, 64.772);
+        values.put(LocationEntry.COLUMN_COORD_LONG,  -147.355);
 
         long locationRowId = db.insert(LocationEntry.TABLE_NAME, null, values);
         Log.d(LOG_TAG, "New location row id: "+locationRowId);
 
-        String[] columns = {
-                LocationEntry._ID,
-                LocationEntry.COLUMN_LOCATION_SETTING,
-                LocationEntry.COLUMN_CITY_NAME,
-                LocationEntry.COLUMN_COORD_LAT,
-                LocationEntry.COLUMN_COORD_LONG
-        };
-
         Cursor cursor = db.query(
                 LocationEntry.TABLE_NAME,  // Table to Query
-                columns,
+                null,
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
                 null, // columns to group by
@@ -65,48 +52,24 @@ public class TestDb extends AndroidTestCase {
         compareCursorValue(cursor, values);
 
         // Fantastic.  Now that we have a location, add some weather!
-        String testDateText = "20141205";
-        double testDegrees = 1.1;
-        double testHumidity = 1.2;
-        double testPressure = 1.3;
-        double testMaxTemp = 75.2;
-        double testMinTemp = 65.2;
-        String testShortDesc = "Asteroids";
-        double testWindSpeed = 5.5;
-        int testWeatherId = 321;
-
         ContentValues weatherValues = new ContentValues();
         weatherValues.put(WeatherEntry.COLUMN_LOC_KEY,    locationRowId);
-        weatherValues.put(WeatherEntry.COLUMN_DATETEXT,   testDateText);
-        weatherValues.put(WeatherEntry.COLUMN_DEGREES,    testDegrees);
-        weatherValues.put(WeatherEntry.COLUMN_HUMIDITY,   testHumidity);
-        weatherValues.put(WeatherEntry.COLUMN_PRESSURE,   testPressure);
-        weatherValues.put(WeatherEntry.COLUMN_MAX_TEMP,   testMaxTemp);
-        weatherValues.put(WeatherEntry.COLUMN_MIN_TEMP,   testMinTemp);
-        weatherValues.put(WeatherEntry.COLUMN_SHORT_DESC, testShortDesc);
-        weatherValues.put(WeatherEntry.COLUMN_WIND_SPEED, testWindSpeed);
-        weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, testWeatherId);
+        weatherValues.put(WeatherEntry.COLUMN_DATETEXT,   "20141205");
+        weatherValues.put(WeatherEntry.COLUMN_DEGREES,    1.1);
+        weatherValues.put(WeatherEntry.COLUMN_HUMIDITY,   1.2);
+        weatherValues.put(WeatherEntry.COLUMN_PRESSURE,   1.3);
+        weatherValues.put(WeatherEntry.COLUMN_MAX_TEMP,   75.2);
+        weatherValues.put(WeatherEntry.COLUMN_MIN_TEMP,   65.2);
+        weatherValues.put(WeatherEntry.COLUMN_SHORT_DESC, "Asteroids");
+        weatherValues.put(WeatherEntry.COLUMN_WIND_SPEED, 5.5);
+        weatherValues.put(WeatherEntry.COLUMN_WEATHER_ID, 321);
 
         long weatherRowId = db.insert(WeatherEntry.TABLE_NAME, null, weatherValues);
         Log.d(LOG_TAG, "New weather row id: "+weatherRowId);
 
-        String[] weatherColumns = {
-                WeatherEntry._ID,
-                WeatherEntry.COLUMN_LOC_KEY,
-                WeatherEntry.COLUMN_DATETEXT,
-                WeatherEntry.COLUMN_DEGREES,
-                WeatherEntry.COLUMN_HUMIDITY,
-                WeatherEntry.COLUMN_PRESSURE,
-                WeatherEntry.COLUMN_MAX_TEMP,
-                WeatherEntry.COLUMN_MIN_TEMP,
-                WeatherEntry.COLUMN_SHORT_DESC,
-                WeatherEntry.COLUMN_WIND_SPEED,
-                WeatherEntry.COLUMN_WEATHER_ID
-        };
-
         Cursor weatherCursor = db.query(
                 WeatherEntry.TABLE_NAME,  // Table to Query
-                weatherColumns,
+                null,
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
                 null, // columns to group by
