@@ -119,10 +119,5 @@ public class WeatherContract {
         public static Uri buildLocationUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
         }
-
-        public static Uri buildLocation(String locationSetting) {
-            return CONTENT_URI.buildUpon().appendPath(locationSetting).build();
-        }
-
     }
 }

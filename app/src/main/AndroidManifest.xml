@@ -40,6 +40,9 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
-    </application>
-
+        <provider
+            android:authorities="com.example.viko.sunshine.app"
+            android:name=".data.WeatherProvider">
+        </provider>
+</application>
 </manifest>
