@@ -131,7 +131,7 @@ public class WeatherProvider extends ContentProvider {
             }
             case WEATHER: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
-                    WeatherContract.WeatherEntry.TABLE_NAME,
+                    WeatherEntry.TABLE_NAME,
                     projection,
                     selection,
                     selectionArgs,
@@ -143,25 +143,25 @@ public class WeatherProvider extends ContentProvider {
             }
             case LOCATION: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
-                        WeatherContract.LocationEntry.TABLE_NAME,
-                        projection,
-                        selection,
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
+                    LocationEntry.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    sortOrder
                 );
                 break;
             }
             case LOCATION_ID: {
                 retCursor = mOpenHelper.getReadableDatabase().query(
-                        WeatherContract.LocationEntry.TABLE_NAME,
-                        projection,
-                        WeatherContract.LocationEntry._ID + " = '"+ ContentUris.parseId(uri) + "' ",
-                        selectionArgs,
-                        null,
-                        null,
-                        sortOrder
+                    LocationEntry.TABLE_NAME,
+                    projection,
+                    LocationEntry._ID + " = '"+ ContentUris.parseId(uri) + "' ",
+                    selectionArgs,
+                    null,
+                    null,
+                    sortOrder
                 );
                 break;
             }
@@ -216,7 +216,9 @@ public class WeatherProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri "+ uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        if ( locationRowId > 0 ) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         return returningUri;
     }
 
@@ -237,7 +239,9 @@ public class WeatherProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri "+ uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        if ( rowsAffected > 0 ) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         return rowsAffected;
     }
 
@@ -258,7 +262,9 @@ public class WeatherProvider extends ContentProvider {
             default:
                 throw new UnsupportedOperationException("Unknown uri "+ uri);
         }
-        getContext().getContentResolver().notifyChange(uri, null);
+        if ( rowsAffected > 0 ) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
         return rowsAffected;
     }
 }

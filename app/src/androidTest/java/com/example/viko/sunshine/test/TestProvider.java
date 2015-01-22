@@ -19,8 +19,42 @@ import com.example.viko.sunshine.data.WeatherDbHelper;
 public class TestProvider extends AndroidTestCase {
     String LOG_TAG = TestProvider.class.getSimpleName();
 
-    public void testDeleteDb() throws Throwable{
-        mContext.deleteDatabase(WeatherDbHelper.DATABASE_NAME);
+    public void testDeleteAllRecords() throws Throwable{
+        ContentResolver provider = mContext.getContentResolver();
+
+        int rowsDeleted = provider.delete(WeatherEntry.CONTENT_URI, null, null);
+        assertTrue( rowsDeleted > 0 );
+
+        rowsDeleted = provider.delete(LocationEntry.CONTENT_URI, null, null);
+        assertTrue( rowsDeleted > 0 );
+    }
+
+    public void testDeleteRecords() throws Throwable{
+        ContentResolver provider = mContext.getContentResolver();
+
+        ContentValues values = TestDb.createTestLocation();
+        Uri locationUri = provider.insert(LocationEntry.CONTENT_URI, values);
+        Log.d(LOG_TAG, "New Location URI " + locationUri.toString());
+        long locationRowId = ContentUris.parseId(locationUri);
+
+        ContentValues weatherValues = TestDb.createTestWeather(locationRowId);
+        Uri weatherUri = provider.insert(WeatherEntry.CONTENT_URI, weatherValues);
+        Log.d(LOG_TAG, "New Weather: " + weatherUri.toString());
+        long weatherRowId = ContentUris.parseId(locationUri);
+
+        int rowsDeleted = provider.delete(
+            LocationEntry.CONTENT_URI,
+            LocationEntry._ID + " = ?",
+            new String[]{ String.valueOf(locationRowId) }
+        );
+        assertTrue( rowsDeleted > 0 );
+
+        rowsDeleted = provider.delete(
+            WeatherEntry.CONTENT_URI,
+            WeatherEntry._ID + " = ?",
+            new String[]{ String.valueOf(weatherRowId) }
+        );
+        assertTrue( rowsDeleted > 0 );
     }
 
     public void testGetType() throws Throwable{
@@ -104,6 +138,46 @@ public class TestProvider extends AndroidTestCase {
                 null // sort order
         );
         TestDb.compareCursorValue(weatherCursor, weatherValues);
+    }
+
+    public void testUpdateRecords() throws Throwable{
+        ContentResolver provider = mContext.getContentResolver();
+
+        String TEST_LOCATION = "Some other location";
+
+        ContentValues values = TestDb.createTestLocation();
+        values.put(LocationEntry.COLUMN_LOCATION_SETTING, TEST_LOCATION);
+
+        Uri locationUri = provider.insert(LocationEntry.CONTENT_URI, values);
+        Log.d(LOG_TAG, "New Location URI " + locationUri.toString());
+        long locationRowId = ContentUris.parseId(locationUri);
+
+        int rowsUpdated = provider.update(
+            LocationEntry.CONTENT_URI,
+            values,
+            LocationEntry._ID + " = ?",
+            new String[]{ String.valueOf(locationRowId) }
+        );
+
+        assertTrue( rowsUpdated > 0 );
+
+
+        String TEST_DATE = "19800101";
+
+        ContentValues weatherValues = TestDb.createTestWeather(locationRowId);
+        weatherValues.put(WeatherEntry.COLUMN_DATETEXT, TEST_DATE);
+
+        Uri weatherUri = provider.insert(WeatherEntry.CONTENT_URI, weatherValues);
+        Log.d(LOG_TAG, "New Weather: " + weatherUri.toString());
+        long weatherRowId = ContentUris.parseId(locationUri);
+
+        rowsUpdated = provider.update(
+            WeatherEntry.CONTENT_URI,
+            weatherValues,
+            WeatherEntry._ID + " = ?",
+            new String[]{ String.valueOf(weatherRowId) }
+        );
+        assertTrue( rowsUpdated > 0 );
     }
 
 }
