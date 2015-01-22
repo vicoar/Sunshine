@@ -5,6 +5,7 @@ import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.location.Location;
 import android.net.Uri;
@@ -13,6 +14,8 @@ import android.util.Log;
 import com.example.viko.sunshine.data.WeatherContract;
 import com.example.viko.sunshine.data.WeatherContract.WeatherEntry;
 import com.example.viko.sunshine.data.WeatherContract.LocationEntry;
+
+import java.sql.SQLException;
 
 
 /**
@@ -190,17 +193,72 @@ public class WeatherProvider extends ContentProvider {
     }
 
     @Override
-    public Uri insert(Uri uri, ContentValues contentValues) {
-        return null;
+    public Uri insert(Uri uri, ContentValues values){
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        long locationRowId;
+        Uri returningUri = null;
+
+        switch (sUriMatcher.match(uri)){
+            case WEATHER: {
+                locationRowId = db.insert(WeatherEntry.TABLE_NAME, null, values);
+                if ( locationRowId > 0 ) {
+                    returningUri = WeatherEntry.buildWeatherUri(locationRowId);
+                }
+                break;
+            }
+            case LOCATION: {
+                locationRowId = db.insert(LocationEntry.TABLE_NAME, null, values);
+                if ( locationRowId > 0 ) {
+                    returningUri = LocationEntry.buildLocationUri(locationRowId);
+                }
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Unknown uri "+ uri);
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return returningUri;
     }
 
     @Override
-    public int delete(Uri uri, String s, String[] strings) {
-        return 0;
+    public int delete(Uri uri, String whereClause, String[] whereValues) {
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        int rowsAffected;
+
+        switch (sUriMatcher.match(uri)){
+            case WEATHER: {
+                rowsAffected = db.delete(WeatherEntry.TABLE_NAME, whereClause, whereValues);
+                break;
+            }
+            case LOCATION: {
+                rowsAffected = db.delete(LocationEntry.TABLE_NAME, whereClause, whereValues);
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Unknown uri "+ uri);
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return rowsAffected;
     }
 
     @Override
-    public int update(Uri uri, ContentValues contentValues, String s, String[] strings) {
-        return 0;
+    public int update(Uri uri, ContentValues values, String whereClause, String[] whereValues) {
+        SQLiteDatabase db = mOpenHelper.getWritableDatabase();
+        int rowsAffected;
+
+        switch (sUriMatcher.match(uri)){
+            case WEATHER: {
+                rowsAffected = db.update(WeatherEntry.TABLE_NAME, values, whereClause, whereValues);
+                break;
+            }
+            case LOCATION: {
+                rowsAffected = db.update(LocationEntry.TABLE_NAME, values, whereClause, whereValues);
+                break;
+            }
+            default:
+                throw new UnsupportedOperationException("Unknown uri "+ uri);
+        }
+        getContext().getContentResolver().notifyChange(uri, null);
+        return rowsAffected;
     }
 }

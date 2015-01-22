@@ -1,20 +1,17 @@
 package com.example.viko.sunshine.test;
 
+import android.content.ContentResolver;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.database.Cursor;
-import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.location.Location;
+import android.net.Uri;
 import android.test.AndroidTestCase;
 import android.util.Log;
 
 import com.example.viko.sunshine.data.WeatherContract.LocationEntry;
 import com.example.viko.sunshine.data.WeatherContract.WeatherEntry;
 import com.example.viko.sunshine.data.WeatherDbHelper;
-
-import junit.framework.Test;
-
-import java.util.Set;
 
 /**
  * Created by viko on 15/11/2014.
@@ -47,15 +44,14 @@ public class TestProvider extends AndroidTestCase {
     }
 
     public void testInsertReadProvider() throws Throwable{
-        WeatherDbHelper dbHelper =  new WeatherDbHelper(mContext);
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        ContentResolver provider = mContext.getContentResolver();
 
         ContentValues values = TestDb.createTestLocation();
-        long locationRowId = db.insert(LocationEntry.TABLE_NAME, null, values);
-        assertTrue(locationRowId != -1);
-        Log.d(LOG_TAG, "New location row id: "+locationRowId);
+        Uri locationUri = provider.insert(LocationEntry.CONTENT_URI, values);
+        Log.d(LOG_TAG, "New Location URI " + locationUri.toString());
+        long locationRowId = ContentUris.parseId(locationUri);
 
-        Cursor cursor = mContext.getContentResolver().query(
+        Cursor cursor = provider.query(
                 LocationEntry.buildLocationUri(locationRowId),
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
@@ -66,11 +62,10 @@ public class TestProvider extends AndroidTestCase {
         TestDb.compareCursorValue(cursor, values);
 
         ContentValues weatherValues = TestDb.createTestWeather(locationRowId);
-        long weatherRowId = db.insert(WeatherEntry.TABLE_NAME, null, weatherValues);
-        assertTrue(weatherRowId != -1);
-        Log.d(LOG_TAG, "New weather row id: "+weatherRowId);
+        Uri weatherUri = provider.insert(WeatherEntry.CONTENT_URI, weatherValues);
+        Log.d(LOG_TAG, "New Weather: " + weatherUri.toString());
 
-        Cursor weatherCursor = mContext.getContentResolver().query(
+        Cursor weatherCursor = provider.query(
                 WeatherEntry.CONTENT_URI,
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
@@ -80,7 +75,7 @@ public class TestProvider extends AndroidTestCase {
         );
         TestDb.compareCursorValue(weatherCursor, weatherValues);
 
-        weatherCursor = mContext.getContentResolver().query(
+        weatherCursor = provider.query(
                 WeatherEntry.buildWeatherLocation(TestDb.TEST_LOCATION),
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
@@ -90,7 +85,7 @@ public class TestProvider extends AndroidTestCase {
         );
         TestDb.compareCursorValue(weatherCursor, weatherValues);
 
-        weatherCursor = mContext.getContentResolver().query(
+        weatherCursor = provider.query(
                 WeatherEntry.buildWeatherLocationWithStartDate(TestDb.TEST_LOCATION, TestDb.TEST_DATE),
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
@@ -100,7 +95,7 @@ public class TestProvider extends AndroidTestCase {
         );
         TestDb.compareCursorValue(weatherCursor, weatherValues);
 
-        weatherCursor = mContext.getContentResolver().query(
+        weatherCursor = provider.query(
                 WeatherEntry.buildWeatherLocationWithDate(TestDb.TEST_LOCATION, TestDb.TEST_DATE),
                 null, // Columns for the "where" clause
                 null, // Values for the "where" clause
@@ -109,8 +104,6 @@ public class TestProvider extends AndroidTestCase {
                 null // sort order
         );
         TestDb.compareCursorValue(weatherCursor, weatherValues);
-
-        db.close();
     }
 
 }
