@@ -4,6 +4,7 @@
     <string name="pref_location_label">Location</string>
     <string name="pref_location_key" translatable="false">location</string>
     <string name="pref_location_label_default" translatable="false">94043</string>
+    <string name="pref_location_default" translatable="false">London</string>
 
     <string name="pref_unit_label">Units</string>
     <string-array name="pref_unit_titles">
