@@ -13,6 +13,8 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 
+import com.example.viko.sunshine.app.Utility;
+import com.example.viko.sunshine.data.WeatherContract;
 import com.example.viko.sunshine.data.WeatherContract.LocationEntry;
 import com.example.viko.sunshine.data.WeatherContract.WeatherEntry;
 
@@ -37,13 +39,11 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
 
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
     private Activity mActivity;
-    private ArrayAdapter<String> mAdapter;
     private ContentResolver provider;
     private String locationQuery;
 
-    public FetchWeatherTask(Activity activity, ArrayAdapter<String> adapter){ //constructor
+    public FetchWeatherTask(Activity activity){ //constructor
         this.mActivity  = activity;
-        this.mAdapter   = adapter;
         this.provider = mActivity.getContentResolver();
     }
 
@@ -134,36 +134,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         return null;
     }
 
-    @Override
-    protected void onPostExecute(Void x) {
-        Uri weatherByLocation = WeatherEntry.buildWeatherLocation(locationQuery);
-        Cursor cursor = provider.query(weatherByLocation, null ,null, null, null);
-
-        mAdapter.clear();
-
-        while ( cursor.moveToNext() ) {
-            mAdapter.add(formatCursor(cursor));
-        }
-        mAdapter.notifyDataSetChanged();
-        cursor.close();
-    }
-
-    private String getDateString(long time){
-        Date date = new Date(time * 1000);
-        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyymmdd");
-        String out = dbFormat.format(date).toString();
-        return out;
-    }
-
-    private String getReadableDateString(String dateStr) throws ParseException{
-        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyymmdd");
-        Date date = dbFormat.parse(dateStr);
-        SimpleDateFormat format = new SimpleDateFormat("E, MMM d");
-        String out = format.format(date).toString();
-        return out;
-    }
-
-    private String formatCursor(Cursor cursor) {
+    /*private String formatCursor(Cursor cursor) {
         int dateIdx = cursor.getColumnIndex(WeatherEntry.COLUMN_DATETEXT);
         String dateStr = cursor.getString(dateIdx);
         String day = "";
@@ -178,23 +149,23 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         double low = cursor.getDouble(lowIdx);
 
         try{
-            day = getReadableDateString(dateStr);
+            day = WeatherContract.getReadableDateString(dateStr);
         } catch (Exception e) {
             Log.e(LOG_TAG, e.getMessage());
         }
 
         String highAndLow = formatHighLows(high, low);
         return day + " - " + description + " - " + highAndLow;
-    }
+    }*/
 
-    private String formatHighLows(double high, double low) {
-        // For presentation, assume the user doesn't care about tenths of a degree.
-        long roundedHigh = Math.round(convertUnits(high));
-        long roundedLow = Math.round(convertUnits(low));
+    /*private String formatHighLows(double high, double low) {
+        boolean isMetric = Utility.isMetric(mActivity);
+        String roundedHigh = Utility.formatTemperature(high, isMetric);
+        String roundedLow  = Utility.formatTemperature(low, isMetric);
 
         String highLowStr = roundedHigh + "/" + roundedLow;
         return highLowStr;
-    }
+    }*/
 
     private long createLocation(JSONObject json, String locationSetting) throws JSONException {
         // Location Keys
@@ -270,7 +241,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
             JSONObject dayForecast = weatherArray.getJSONObject(i);
 
             long dateTime = dayForecast.getLong(OWM_DATETIME);
-            day = getDateString(dateTime);
+            day = WeatherContract.getDbDateString(new Date(dateTime));
 
             JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
             description = weatherObject.getString(OWM_DESCRIPTION);
@@ -297,13 +268,6 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         provider.bulkInsert(weatherUri, values);
     }
 
-    /**
-     * Take the String representing the complete forecast in JSON Format and
-     * pull out the data we need to construct the Strings needed for the wireframes.
-     *
-     * Fortunately parsing is easy:  constructor takes the JSON string and converts it
-     * into an Object hierarchy for us.
-     */
     private void getWeatherDataFromJson(String forecastJsonStr, int numDays, String locationQuery)
             throws JSONException {
 
@@ -313,15 +277,4 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         createWeatherForLocation(forecastJson, numDays, locationId);
     }
 
-    private double convertUnits(double temp){
-        SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(mActivity);
-        String defaultUnits = mActivity.getString(R.string.pref_unit_default);
-        String units = settings.getString(mActivity.getString(R.string.pref_unit_key), defaultUnits);
-
-        if ( !units.equals(defaultUnits) ){
-            return temp * 1.8 + 32;
-        }
-
-        return temp;
-    }
 }

@@ -3,6 +3,10 @@ package com.example.viko.sunshine.data;
 import android.content.ContentUris;
 import android.net.Uri;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by viko on 08/11/2014.
  */
@@ -118,6 +122,30 @@ public class WeatherContract {
 
         public static Uri buildLocationUri(long id) {
             return ContentUris.withAppendedId(CONTENT_URI, id);
+        }
+    }
+
+    public static String getDbDateString(Date date){
+        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyymmdd");
+        String out = dbFormat.format(date).toString();
+        return out;
+    }
+
+    public static String getReadableDateString(String dateStr) throws ParseException {
+        SimpleDateFormat dbFormat = new SimpleDateFormat("yyyymmdd");
+        Date date = dbFormat.parse(dateStr);
+        SimpleDateFormat format = new SimpleDateFormat("E, MMM d");
+        String out = format.format(date).toString();
+        return out;
+    }
+
+    public static Date getDateFromDb(String dateText) {
+        SimpleDateFormat dbDateFormat = new SimpleDateFormat("yyyymmdd");
+        try {
+            return dbDateFormat.parse(dateText);
+        } catch ( ParseException e ) {
+            e.printStackTrace();
+            return null;
         }
     }
 }
