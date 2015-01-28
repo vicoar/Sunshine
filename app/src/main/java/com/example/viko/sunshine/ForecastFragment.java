@@ -1,6 +1,5 @@
 package com.example.viko.sunshine;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
@@ -21,15 +20,14 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import com.example.viko.sunshine.app.Utility;
 import com.example.viko.sunshine.data.WeatherContract;
 import com.example.viko.sunshine.data.WeatherContract.WeatherEntry;
 import com.example.viko.sunshine.data.WeatherContract.LocationEntry;
 
-import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -79,33 +77,72 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-        final Activity act = this.getActivity();
 
         mForecastAdapter = new SimpleCursorAdapter(
             getActivity(),
             R.layout.list_item_forecast,
             null,
-            new String[]{WeatherEntry.COLUMN_DATETEXT,
-                    WeatherEntry.COLUMN_SHORT_DESC,
-                    WeatherEntry.COLUMN_MAX_TEMP,
-                    WeatherEntry.COLUMN_MIN_TEMP
+            new String[]{
+                WeatherEntry.COLUMN_DATETEXT,
+                WeatherEntry.COLUMN_SHORT_DESC,
+                WeatherEntry.COLUMN_MAX_TEMP,
+                WeatherEntry.COLUMN_MIN_TEMP
             },
-            new int[]{R.id.list_item_date_textview,
-                    R.id.list_item_forecast_textview,
-                    R.id.list_item_high_textview,
-                    R.id.list_item_low_textview
+            new int[]{
+                R.id.list_item_date_textview,
+                R.id.list_item_forecast_textview,
+                R.id.list_item_high_textview,
+                R.id.list_item_low_textview
             },
             0
         );
+
+        mForecastAdapter.setViewBinder(new SimpleCursorAdapter.ViewBinder() {
+            @Override
+            public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
+                boolean isMetric = Utility.isMetric(getActivity());
+                switch (columnIndex) {
+                    case COL_WEATHER_MAX_TEMP:
+                    case COL_WEATHER_MIN_TEMP: {
+                        // we have to do some formatting and possibly a conversion
+                        ((TextView) view).setText(Utility.formatTemperature(
+                                cursor.getDouble(columnIndex), isMetric));
+                        return true;
+                    }
+                    case COL_WEATHER_DATE: {
+                        String dateString = cursor.getString(columnIndex);
+                        TextView dateView = (TextView) view;
+                        dateView.setText(Utility.formatDate(dateString));
+                        return true;
+                    }
+                }
+                return false;
+            }
+        });
 
        final ListView forecastList = (ListView) rootView.findViewById(R.id.listview_forecast);
        forecastList.setAdapter(mForecastAdapter);
        forecastList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
            @Override
-           public void onItemClick(AdapterView adapterView, View view, int position, long l) {
-               Intent intent = new Intent(getActivity(), DetailActivity.class)
-                       .putExtra(Intent.EXTRA_TEXT, "placeholder");
-               startActivity(intent);
+           public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
+               Cursor cursor = mForecastAdapter.getCursor();
+               if (cursor != null && cursor.moveToPosition(position)) {
+                   String dateString = Utility.formatDate(cursor.getString(COL_WEATHER_DATE));
+                   String weatherDescription = cursor.getString(COL_WEATHER_DESC);
+
+                   boolean isMetric = Utility.isMetric(getActivity());
+                   String high = Utility.formatTemperature(
+                           cursor.getDouble(COL_WEATHER_MAX_TEMP), isMetric);
+                   String low = Utility.formatTemperature(
+                           cursor.getDouble(COL_WEATHER_MIN_TEMP), isMetric);
+
+                   String detailString = String.format("%s - %s - %s/%s",
+                           dateString, weatherDescription, high, low);
+
+                   Intent intent = new Intent(getActivity(), DetailActivity.class)
+                           .putExtra(Intent.EXTRA_TEXT, detailString);
+                   startActivity(intent);
+               }
            }
        });
 
@@ -146,12 +183,19 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
     @Override
     public void onStart() {
         super.onStart();
-        updateWeather();
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.forecastfragment, menu);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if (mLocation != null && !mLocation.equals(Utility.getPreferredLocation(getActivity()))) {
+            getLoaderManager().restartLoader(FORECAST_LOADER, null, this);
+        }
     }
 
     @Override
@@ -165,10 +209,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
             SharedPreferences settings = PreferenceManager.getDefaultSharedPreferences(getActivity());
             String location = settings.getString(getString(R.string.pref_location_key),getString(R.string.pref_location_label_default));
 
-            // Create the text message with a string
             Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("geo:0,0?q="+location));
 
-            // Verify that the intent will resolve to an activity
             if (intent.resolveActivity(getActivity().getPackageManager()) != null) {
                 startActivity(intent);
             }
@@ -176,6 +218,8 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
         }
         return super.onOptionsItemSelected(item);
     }
+
+
 
     private void updateWeather() {
         String location = Utility.getPreferredLocation(this.getActivity());

@@ -134,39 +134,6 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         return null;
     }
 
-    /*private String formatCursor(Cursor cursor) {
-        int dateIdx = cursor.getColumnIndex(WeatherEntry.COLUMN_DATETEXT);
-        String dateStr = cursor.getString(dateIdx);
-        String day = "";
-
-        int descIdx = cursor.getColumnIndex(WeatherEntry.COLUMN_SHORT_DESC);
-        String description = cursor.getString(descIdx);
-
-        int highIdx = cursor.getColumnIndex(WeatherEntry.COLUMN_MAX_TEMP);
-        double high = cursor.getDouble(highIdx);
-
-        int lowIdx = cursor.getColumnIndex(WeatherEntry.COLUMN_MIN_TEMP);
-        double low = cursor.getDouble(lowIdx);
-
-        try{
-            day = WeatherContract.getReadableDateString(dateStr);
-        } catch (Exception e) {
-            Log.e(LOG_TAG, e.getMessage());
-        }
-
-        String highAndLow = formatHighLows(high, low);
-        return day + " - " + description + " - " + highAndLow;
-    }*/
-
-    /*private String formatHighLows(double high, double low) {
-        boolean isMetric = Utility.isMetric(mActivity);
-        String roundedHigh = Utility.formatTemperature(high, isMetric);
-        String roundedLow  = Utility.formatTemperature(low, isMetric);
-
-        String highLowStr = roundedHigh + "/" + roundedLow;
-        return highLowStr;
-    }*/
-
     private long createLocation(JSONObject json, String locationSetting) throws JSONException {
         // Location Keys
         final String OWM_CITY = "city";
@@ -241,7 +208,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
             JSONObject dayForecast = weatherArray.getJSONObject(i);
 
             long dateTime = dayForecast.getLong(OWM_DATETIME);
-            day = WeatherContract.getDbDateString(new Date(dateTime));
+            day = WeatherContract.getDbDateString(new Date(dateTime*1000));
 
             JSONObject weatherObject = dayForecast.getJSONArray(OWM_WEATHER).getJSONObject(0);
             description = weatherObject.getString(OWM_DESCRIPTION);
