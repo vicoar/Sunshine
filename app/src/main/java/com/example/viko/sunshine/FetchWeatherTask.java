@@ -1,15 +1,18 @@
 package com.example.viko.sunshine;
 
 import android.app.Activity;
+import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 
@@ -38,20 +41,20 @@ import java.util.Date;
 public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
 
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
-    private Activity mActivity;
-    private ContentResolver provider;
-    private String locationQuery;
 
-    public FetchWeatherTask(Activity activity){ //constructor
-        this.mActivity  = activity;
-        this.provider = mActivity.getContentResolver();
+    private ArrayAdapter<String> mForecastAdapter;
+    private final Context mContext;
+
+    public FetchWeatherTask(Context context, ArrayAdapter<String> forecastAdapter) {
+        mContext = context;
+        mForecastAdapter = forecastAdapter;
     }
 
     @Override
     protected Void doInBackground(String... params){
         String format = "json";
         String unit = "metric";
-        locationQuery = params[0];
+        String locationQuery = params[0];
         int numberOfDays = 7;
 
         // These two need to be declared outside the try/catch
@@ -134,37 +137,29 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         return null;
     }
 
-    private long createLocation(JSONObject json, String locationSetting) throws JSONException {
-        // Location Keys
-        final String OWM_CITY = "city";
-        final String OWM_CITY_NAME = "name";
-        final String OWM_CITY_COORD = "coord";
-        final String OWM_CITY_COORD_LON = "lon";
-        final String OWM_CITY_COORD_LAT = "lat";
-
+    public long addLocation(String locationSetting, String cityName, double lat, double lon) {
         Uri locationsUri = LocationEntry.CONTENT_URI;
 
         long locationId;
 
         String selectByLocationSetting = LocationEntry.TABLE_NAME + "." + LocationEntry.COLUMN_LOCATION_SETTING + " = ?";
 
+        ContentResolver provider = mContext.getContentResolver();
+
         Cursor cursor = provider.query(
             locationsUri,
-            null,
+            new String[]{LocationEntry._ID},
             selectByLocationSetting,
             new String[]{locationSetting},
             null
         );
 
         if ( cursor.getCount() == 0 ) {
-            JSONObject cityObj    = json.getJSONObject(OWM_CITY);
-            JSONObject cityCoords = cityObj.getJSONObject(OWM_CITY_COORD);
-
             ContentValues locationValues = new ContentValues();
             locationValues.put(LocationEntry.COLUMN_LOCATION_SETTING, locationSetting);
-            locationValues.put(LocationEntry.COLUMN_CITY_NAME,        cityObj.getString(OWM_CITY_NAME));
-            locationValues.put(LocationEntry.COLUMN_COORD_LAT,        cityCoords.getDouble(OWM_CITY_COORD_LON));
-            locationValues.put(LocationEntry.COLUMN_COORD_LONG,       cityCoords.getDouble(OWM_CITY_COORD_LAT));
+            locationValues.put(LocationEntry.COLUMN_CITY_NAME,        cityName);
+            locationValues.put(LocationEntry.COLUMN_COORD_LAT,        lat);
+            locationValues.put(LocationEntry.COLUMN_COORD_LONG,       lon);
 
             Uri locationUri = provider.insert(locationsUri, locationValues);
             locationId = ContentUris.parseId(locationUri);
@@ -194,6 +189,8 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
         final String OWM_ID = "id";
 
         Uri weatherUri = WeatherEntry.CONTENT_URI;
+
+        ContentResolver provider = mContext.getContentResolver();
 
         provider.delete(weatherUri,null,null);
 
@@ -237,11 +234,25 @@ public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
 
     private void getWeatherDataFromJson(String forecastJsonStr, int numDays, String locationQuery)
             throws JSONException {
+        JSONObject json = new JSONObject(forecastJsonStr);
 
-        JSONObject forecastJson = new JSONObject(forecastJsonStr);
+        // Location Keys
+        final String OWM_CITY = "city";
+        final String OWM_CITY_NAME = "name";
+        final String OWM_CITY_COORD = "coord";
+        final String OWM_CITY_COORD_LON = "lon";
+        final String OWM_CITY_COORD_LAT = "lat";
 
-        long locationId = createLocation(forecastJson, locationQuery);
-        createWeatherForLocation(forecastJson, numDays, locationId);
+        JSONObject cityObj    = json.getJSONObject(OWM_CITY);
+        JSONObject cityCoords = cityObj.getJSONObject(OWM_CITY_COORD);
+
+        long locationId = addLocation(
+            locationQuery,
+            cityObj.getString(OWM_CITY_NAME),
+            cityCoords.getDouble(OWM_CITY_COORD_LAT),
+            cityCoords.getDouble(OWM_CITY_COORD_LON)
+        );
+        createWeatherForLocation(json, numDays, locationId);
     }
 
 }
