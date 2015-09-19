@@ -1,14 +1,11 @@
 package com.example.viko.sunshine;
 
-import android.app.Activity;
-import android.content.ContentProvider;
 import android.content.ContentResolver;
 import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.location.Location;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.preference.PreferenceManager;
@@ -16,7 +13,6 @@ import android.support.v4.widget.SimpleCursorAdapter;
 import android.util.Log;
 import android.widget.ArrayAdapter;
 
-import com.example.viko.sunshine.app.Utility;
 import com.example.viko.sunshine.data.WeatherContract;
 import com.example.viko.sunshine.data.WeatherContract.LocationEntry;
 import com.example.viko.sunshine.data.WeatherContract.WeatherEntry;
@@ -31,28 +27,27 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
  * Created by vico on 23/01/2015.
  */
-public class FetchWeatherTask extends AsyncTask<String, Void, Void> {
+public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
     private final String LOG_TAG = FetchWeatherTask.class.getSimpleName();
 
-    private ArrayAdapter<String> mForecastAdapter;
+    private SimpleCursorAdapter mForecastAdapter;
     private final Context mContext;
 
-    public FetchWeatherTask(Context context, ArrayAdapter<String> forecastAdapter) {
+    public FetchWeatherTask(Context context, SimpleCursorAdapter forecastAdapter) {
         mContext = context;
         mForecastAdapter = forecastAdapter;
     }
 
     @Override
-    protected Void doInBackground(String... params){
+    protected String[] doInBackground(String... params){
         String format = "json";
+
         String unit = "metric";
         String locationQuery = params[0];
         int numberOfDays = 7;

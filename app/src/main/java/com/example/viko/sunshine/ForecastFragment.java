@@ -223,10 +223,10 @@ public class ForecastFragment extends Fragment implements LoaderManager.LoaderCa
 
 
     private void updateWeather() {
-        //FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity().getApplicationContext(), mForecastAdapter);
+        FetchWeatherTask weatherTask = new FetchWeatherTask(getActivity(), mForecastAdapter);
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
         String location = prefs.getString(getString(R.string.pref_location_key),
                 getString(R.string.pref_location_default));
-        //weatherTask.execute(location);
+        weatherTask.execute(location);
     }
 }
