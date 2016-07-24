@@ -38,6 +38,7 @@ public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
 
     private SimpleCursorAdapter mForecastAdapter;
     private final Context mContext;
+    private final String apiKey = "02ce24004ecbaf6ffd869f3c4e62607a";
 
     public FetchWeatherTask(Context context, SimpleCursorAdapter forecastAdapter) {
         mContext = context;
@@ -73,7 +74,8 @@ public class FetchWeatherTask extends AsyncTask<String, Void, String[]> {
                     .appendQueryParameter("q", locationQuery)
                     .appendQueryParameter("mode", format)
                     .appendQueryParameter("units", unit)
-                    .appendQueryParameter("cnt", Integer.toString(numberOfDays));
+                    .appendQueryParameter("cnt", Integer.toString(numberOfDays))
+                    .appendQueryParameter("APPID", apiKey);
 
             String apiUrl = builder.build().toString();
             URL url = new URL(apiUrl);
